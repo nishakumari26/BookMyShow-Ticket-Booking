@@ -1,0 +1,14 @@
+target
+.git
+.idea
+.vscode
+.env
+.env.*
+!.env.example
+*.iml
+.DS_Store
+help.md
+frontend
+.vercel
+.railway
+**/*.md
