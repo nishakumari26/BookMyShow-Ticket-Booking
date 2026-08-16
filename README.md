@@ -98,6 +98,17 @@ docker compose up --build
 
 Compose publishes MySQL on **3307**, API on **18080**, and the UI on **13000** by default so it does not collide with a local MySQL on 3306 or a local app on 8080/3000.
 
+Verified on this machine after `docker compose up --build`:
+
+- Frontend: http://localhost:13000
+- Backend health: http://localhost:18080/api/health
+- Movies: http://localhost:18080/api/movies
+- Swagger: http://localhost:18080/swagger-ui/index.html
+
+`GET /api/health` reports API + MySQL status.
+
+GitHub Actions (`.github/workflows/ci.yml`) runs `mvn test` and `npm run build` on push to `main`.
+
 ## Tests
 
 ```bash
