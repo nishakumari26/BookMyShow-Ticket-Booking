@@ -2,6 +2,8 @@
 
 Full-stack movie ticket booking: React frontend, Spring Boot API, MySQL, JWT auth, and optional SMTP notifications.
 
+Source: https://github.com/nishakumari26/BookMyShow-Ticket-Booking
+
 Local URLs (when running on this machine):
 
 - Frontend: http://localhost:3000
