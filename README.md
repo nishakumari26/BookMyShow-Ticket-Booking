@@ -4,13 +4,18 @@ Full-stack movie ticket booking: React frontend, Spring Boot API, MySQL, JWT aut
 
 Source: https://github.com/nishakumari26/BookMyShow-Ticket-Booking
 
+Live production (verified 16 Aug 2026):
+
+- Frontend: https://frontend-nine-psi-53.vercel.app
+- Backend: https://backend-production-57ef3.up.railway.app
+- Health: https://backend-production-57ef3.up.railway.app/api/health
+- Swagger: https://backend-production-57ef3.up.railway.app/swagger-ui/index.html
+
 Local URLs (when running on this machine):
 
 - Frontend: http://localhost:3000
 - Backend: http://localhost:8080
 - Swagger: http://localhost:8080/swagger-ui/index.html
-
-Public production URLs will be added here after Railway and Vercel deployments are verified. Do not treat placeholder text as a live demo.
 
 ## Features
 
@@ -135,9 +140,9 @@ The API Dockerfile uses Java 21. Railway `PORT` is bound via `server.port`.
 1. Root directory: `frontend`
 2. Build command: `npm run build`
 3. Output: `dist`
-4. `VITE_API_BASE_URL=https://<your-railway-host>/api`
+4. `VITE_API_BASE_URL=https://backend-production-57ef3.up.railway.app/api`
 
-Then set backend `FRONTEND_URL` to the Vercel URL and redeploy the API so CORS allows only that origin.
+Backend CORS is locked to `https://frontend-nine-psi-53.vercel.app` (`FRONTEND_URL` / `CORS_ALLOWED_ORIGINS`). SMTP is still off (`MAIL_ENABLED=false`) until those host variables are set. The current Railway env has `APP_SEED_DATA=true`, so the demo seed catalog/accounts exist in production — turn that off and rotate the seed admin password when you no longer need them.
 
 ## License
 
