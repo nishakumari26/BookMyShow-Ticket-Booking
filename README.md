@@ -1,43 +1,63 @@
-# BookMyShow
+# BookMyShow Ticket Booking
 
-Full-stack movie ticket booking: React frontend, Spring Boot API, MySQL, JWT auth, and optional SMTP notifications.
+React + Spring Boot + MySQL movie ticket booking. JWT auth, seat locking, admin CRUD, optional SMTP.
 
-Source: https://github.com/nishakumari26/BookMyShow-Ticket-Booking
+**Live demo**
 
-Live production (verified 16 Aug 2026):
+| | URL |
+| --- | --- |
+| Frontend | https://frontend-nine-psi-53.vercel.app |
+| Backend | https://backend-production-57ef3.up.railway.app |
+| Health | https://backend-production-57ef3.up.railway.app/api/health |
+| Swagger | https://backend-production-57ef3.up.railway.app/swagger-ui/index.html |
+| Source | https://github.com/nishakumari26/BookMyShow-Ticket-Booking |
 
-- Frontend: https://frontend-nine-psi-53.vercel.app
-- Backend: https://backend-production-57ef3.up.railway.app
-- Health: https://backend-production-57ef3.up.railway.app/api/health
-- Swagger: https://backend-production-57ef3.up.railway.app/swagger-ui/index.html
-
-Local URLs (when running on this machine):
+**Local (this machine)**
 
 - Frontend: http://localhost:3000
 - Backend: http://localhost:8080
 - Swagger: http://localhost:8080/swagger-ui/index.html
 
+Docker Compose uses **13000 / 18080 / 3307** so it does not clash with those ports.
+
+## Status (verified 16 Aug 2026)
+
+| Check | Result |
+| --- | --- |
+| GitHub | Live |
+| Docker Compose | Pass |
+| Railway API + MySQL | Pass (`/api/health` → API UP, DB UP) |
+| Vercel frontend | Pass, wired to Railway `/api` |
+| CORS | Pass (Vercel origin only, no `*`) |
+| Auth / JWT | Pass |
+| Booking + duplicate seat `409` | Pass |
+| Cancel booking | Pass |
+| Admin movie CRUD | Pass |
+| GitHub Actions CI | `mvn test` + frontend build on `main` |
+| SMTP email | **Not verified** — `MAIL_HOST` / `MAIL_USERNAME` / `MAIL_PASSWORD` are not set on Railway |
+
+Do not treat email as working until those variables exist and a real inbox is checked.
+
 ## Features
 
-- Registration, login, profile, JWT (`USER` / `ADMIN`)
-- Movie / theater / show catalog and seat maps
-- Multi-seat booking with pessimistic locking (duplicate seat → 409)
+- Register, login, profile (`USER` / `ADMIN`)
+- Movies, theaters, shows, seat map
+- Multi-seat booking with pessimistic locking (taken seat → `409`)
 - Booking history and cancellation
 - Admin dashboard and CRUD
-- Optional booking/cancellation email
+- Optional booking/cancellation email (when SMTP is configured)
+- Public `GET /api/health`
 - Swagger UI
-- Docker Compose (API + MySQL + frontend)
 
 ## Tech stack
 
 | Layer | Choice |
 | --- | --- |
-| Frontend | React 18, Vite, Axios |
-| Backend | Java 21, Spring Boot 3.3 |
-| Database | MySQL 8, Spring Data JPA |
+| Frontend | React 18, Vite, Axios — Vercel |
+| Backend | Java 21, Spring Boot 3.3 — Railway |
+| Database | MySQL — Railway |
 | Security | Spring Security, JWT, BCrypt |
 | Docs | springdoc-openapi |
-| Hosting (intended) | Vercel (frontend), Railway (API + MySQL) |
 
 ## Project layout
 
@@ -48,50 +68,47 @@ frontend/                             Vite React app
 Dockerfile                            Backend image
 frontend/Dockerfile                   Frontend image (nginx)
 docker-compose.yml                    Local containers
+.github/workflows/ci.yml              Maven tests + frontend build
 ```
 
 ## Environment variables
 
-Copy `.env.example` to `.env`. Never commit `.env`.
+Copy `.env.example` to `.env`. **Never commit `.env` or real passwords.**
 
 | Variable | Purpose |
 | --- | --- |
 | `DB_HOST` `DB_PORT` `DB_NAME` | MySQL location |
 | `DB_USERNAME` `DB_PASSWORD` | MySQL credentials |
-| `JWT_SECRET` | HMAC signing key, **≥ 32 characters**. Required in `prod` / `docker`. |
-| `JWT_EXPIRATION` | Token lifetime in milliseconds (alias: `JWT_EXPIRATION_MS`) |
+| `JWT_SECRET` | HMAC key, **≥ 32 characters** (required in `prod` / `docker`) |
+| `JWT_EXPIRATION` | Token lifetime in ms |
 | `MAIL_ENABLED` | `true` to send mail |
 | `MAIL_HOST` `MAIL_PORT` `MAIL_USERNAME` `MAIL_PASSWORD` | SMTP |
 | `FRONTEND_URL` | Production frontend origin for CORS |
-| `CORS_ALLOWED_ORIGINS` | Optional comma-separated origins (overrides if set) |
-| `SPRING_PROFILES_ACTIVE` | `dev` (local), `docker`, or `prod` |
+| `CORS_ALLOWED_ORIGINS` | Comma-separated origins (no `*`) |
+| `SPRING_PROFILES_ACTIVE` | `dev`, `docker`, or `prod` |
 | `PORT` | HTTP port (Railway sets this) |
-| `APP_SEED_DATA` | `true` only for local/demo catalog seed |
-| `APP_ADMIN_EMAIL` `APP_ADMIN_PASSWORD` | Optional production admin bootstrap (Railway secrets) |
+| `APP_SEED_DATA` | `true` seeds demo catalog/accounts |
+| `APP_ADMIN_EMAIL` `APP_ADMIN_PASSWORD` | Optional admin bootstrap on Railway |
 
-Frontend build:
-
-| Variable | Purpose |
-| --- | --- |
-| `VITE_API_BASE_URL` | Absolute API root, e.g. `https://<railway>/api` |
+Frontend build: `VITE_API_BASE_URL` = absolute API root, e.g. `https://backend-production-57ef3.up.railway.app/api`.
 
 ## Local development
 
-Prerequisites: JDK 21, Maven 3.9+, Node 20+, MySQL 8.
+JDK 21, Maven 3.9+, Node 20+, MySQL 8.
 
 ```bash
 mvn spring-boot:run
 cd frontend && npm install && npm run dev
 ```
 
-Development seed accounts (never use in production):
+Demo seed accounts (present when `APP_SEED_DATA=true`):
 
 | Role | Email | Password |
 | --- | --- | --- |
 | ADMIN | `admin@bookmyshow.local` | `Admin@123` |
 | USER | `user@bookmyshow.local` | `User@123` |
 
-Production profile does **not** seed those users. Set `APP_ADMIN_EMAIL` and `APP_ADMIN_PASSWORD` on the host instead.
+The live Railway service currently has seed data **on** so those accounts work there too. Turn `APP_SEED_DATA` off and rotate passwords when you no longer want a public demo login.
 
 ## Docker
 
@@ -101,18 +118,10 @@ cp .env.example .env
 docker compose up --build
 ```
 
-Compose publishes MySQL on **3307**, API on **18080**, and the UI on **13000** by default so it does not collide with a local MySQL on 3306 or a local app on 8080/3000.
-
-Verified on this machine after `docker compose up --build`:
-
-- Frontend: http://localhost:13000
-- Backend health: http://localhost:18080/api/health
+- UI: http://localhost:13000
+- Health: http://localhost:18080/api/health
 - Movies: http://localhost:18080/api/movies
 - Swagger: http://localhost:18080/swagger-ui/index.html
-
-`GET /api/health` reports API + MySQL status.
-
-GitHub Actions (`.github/workflows/ci.yml`) runs `mvn test` and `npm run build` on push to `main`.
 
 ## Tests
 
@@ -121,28 +130,15 @@ mvn test
 cd frontend && npm run build
 ```
 
-## Deployment
+CI: `.github/workflows/ci.yml`.
 
-### Backend (Railway)
+## Production hosting
 
-1. Create a Railway project from this repository.
-2. Add a MySQL plugin. Map `MYSQLHOST` / `MYSQLPORT` / `MYSQLDATABASE` / `MYSQLUSER` / `MYSQLPASSWORD` or set `DB_*` explicitly.
-3. Set `SPRING_PROFILES_ACTIVE=prod`.
-4. Generate a unique `JWT_SECRET` (do not reuse the local placeholder).
-5. Set `FRONTEND_URL` to the Vercel origin (no `*`).
-6. Leave `MAIL_ENABLED=false` until SMTP credentials are configured.
-7. Optional: `APP_ADMIN_EMAIL` and `APP_ADMIN_PASSWORD`.
+**Backend (Railway)** — Java 21 Docker image, `SPRING_PROFILES_ACTIVE=prod`, `PORT` from Railway, MySQL via `DB_*` (referenced from the MySQL plugin). CORS is set to https://frontend-nine-psi-53.vercel.app.
 
-The API Dockerfile uses Java 21. Railway `PORT` is bound via `server.port`.
+**Frontend (Vercel)** — root directory `frontend`, build `npm run build`, output `dist`, env `VITE_API_BASE_URL=https://backend-production-57ef3.up.railway.app/api`.
 
-### Frontend (Vercel)
-
-1. Root directory: `frontend`
-2. Build command: `npm run build`
-3. Output: `dist`
-4. `VITE_API_BASE_URL=https://backend-production-57ef3.up.railway.app/api`
-
-Backend CORS is locked to `https://frontend-nine-psi-53.vercel.app` (`FRONTEND_URL` / `CORS_ALLOWED_ORIGINS`). SMTP is still off (`MAIL_ENABLED=false`) until those host variables are set. The current Railway env has `APP_SEED_DATA=true`, so the demo seed catalog/accounts exist in production — turn that off and rotate the seed admin password when you no longer need them.
+**SMTP (optional)** — on the Railway **backend** service add `MAIL_ENABLED=true`, `MAIL_HOST`, `MAIL_PORT` (587), `MAIL_USERNAME`, `MAIL_PASSWORD`. Gmail needs an App Password. Do not put SMTP secrets in git.
 
 ## License
 
